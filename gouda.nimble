@@ -6,6 +6,7 @@ description   = "A dotty cheesebot"
 license       = "BSD-3-Clause"
 srcDir        = "src"
 bin           = @["gouda"]
+binDir        = "bin"
 
 
 # Dependencies
