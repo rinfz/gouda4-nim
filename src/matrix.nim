@@ -82,3 +82,7 @@ proc login*(self: var Matrix) =
   let response: JsonNode = self.POST("login", data)
   self.accessToken = response["access_token"].getStr
   self.userID = response["user_id"].getStr
+
+proc join*(self: var Matrix) =
+  let response: JsonNode = self.POST(&"join/{self.room}", NULLJSON)
+  self.roomID = response["room_id"].getStr
