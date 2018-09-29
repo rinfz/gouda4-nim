@@ -4,6 +4,8 @@ import os
 import strutils
 import tables
 
+import modules/load
+
 const CONFIGFILE = "config.json"
 
 proc readConfig(): JsonNode = parseFile(CONFIGFILE)
@@ -22,8 +24,11 @@ proc run() =
       messages: seq[Message] = connection.extractMessages(data)
 
     for msg in messages:
-      if "hello bot" in msg.body:
-        connection.sendMessage("YO WHAT UP (from nim)")
+      for fn in allFunctions:
+        let reply = fn(msg)
+
+        if len(reply) > 0:
+          connection.sendMessage(reply)
 
     sleep(3000)  # 3 sec
 
