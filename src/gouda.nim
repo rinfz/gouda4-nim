@@ -10,6 +10,8 @@ proc run() =
   let config = readConfig()
   var connection: Matrix = createMatrix(config)
   connection.login()
+  connection.join()
+  connection.postMessageFilter()
 
 when isMainModule:
   run()

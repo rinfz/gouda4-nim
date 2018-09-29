@@ -4,6 +4,7 @@ import options
 import tables
 import strformat
 import strutils
+from uri import encodeUrl
 
 type
   ParamT = TableRef[string, string]
@@ -14,7 +15,7 @@ type
     roomID: string
     accessToken: string
     nextBatch: string
-    filter: string
+    filterID: string
     txId: int
 
 let NULLJSON*: JsonNode = %*{}
@@ -50,13 +51,17 @@ proc makeParams(params: Option[ParamT]): string =
 
 proc buildUrl(self: Matrix, endpoint: string, params: Option[ParamT],
               version: string): string =
-  var url = &"{self.address}/_matrix/client/{version}/{endpoint}"
-  if len(self.accessToken) > 0:
-    params.get["access_token"] = self.accessToken
+  var
+    url = &"{self.address}/_matrix/client/{version}/{endpoint}"
+    concat = '?'
 
   let paramString = makeParams(params)
   if len(paramString) > 0:
     url &= &"?{paramString}"
+    concat = '&'
+
+  if len(self.accessToken) > 0:
+    url &= &"{concat}access_token={self.accessToken}"
 
   return url
 
@@ -84,5 +89,13 @@ proc login*(self: var Matrix) =
   self.userID = response["user_id"].getStr
 
 proc join*(self: var Matrix) =
-  let response: JsonNode = self.POST(&"join/{self.room}", NULLJSON)
+  let response: JsonNode = self.POST(&"join/{encodeUrl(self.room)}", NULLJSON)
   self.roomID = response["room_id"].getStr
+
+proc postMessageFilter*(self : var Matrix) =
+  let data = %*{
+    "account_data": {"types": ["m.room.message"]},
+    "room": {"rooms": [self.roomID]},
+  }
+  let response: JsonNode = self.POST(&"user/{self.userID}/filter", data)
+  self.filterID = response["filter_id"].getStr
