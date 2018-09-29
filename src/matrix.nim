@@ -76,6 +76,13 @@ proc POST(self: Matrix, endpoint: string, data: JsonNode,
                                                body = $data)
   return response.body.parseJson
 
+proc GET(self: Matrix, endpoint: string, params: Option[ParamT] = none(ParamT),
+         version: string = "unstable"): JsonNode =
+  let url: string = self.buildUrl(endpoint, params, version)
+  let response: Response = self.client.request(url,
+                                               httpMethod=HttpGet)
+  return response.body.parseJson
+
 # Endpoints
 
 proc login*(self: var Matrix) =
@@ -92,10 +99,23 @@ proc join*(self: var Matrix) =
   let response: JsonNode = self.POST(&"join/{encodeUrl(self.room)}", NULLJSON)
   self.roomID = response["room_id"].getStr
 
-proc postMessageFilter*(self : var Matrix) =
+proc postMessageFilter*(self: var Matrix) =
   let data = %*{
     "account_data": {"types": ["m.room.message"]},
     "room": {"rooms": [self.roomID]},
   }
   let response: JsonNode = self.POST(&"user/{self.userID}/filter", data)
   self.filterID = response["filter_id"].getStr
+
+proc sync*(self: var Matrix): JsonNode =
+  var params: Option[ParamT] = some[ParamT]({
+    "filter": self.filterID,
+  }.newTable)
+
+  if len(self.nextBatch) > 0:
+    params.get["next_batch"] = self.nextBatch
+
+  let response: JsonNode = self.GET("sync", params)
+  self.nextBatch = response["next_batch"].getStr
+
+  return response

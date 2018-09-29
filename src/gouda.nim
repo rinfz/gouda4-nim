@@ -12,6 +12,7 @@ proc run() =
   connection.login()
   connection.join()
   connection.postMessageFilter()
+  discard connection.sync()  # initial sync - ignore
 
 when isMainModule:
   run()
