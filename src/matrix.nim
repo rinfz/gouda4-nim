@@ -8,6 +8,7 @@ from uri import encodeUrl
 
 type
   ParamT = TableRef[string, string]
+
   Matrix* = ref object of RootObj
     config: JsonNode
     client: HttpClient
@@ -17,6 +18,8 @@ type
     nextBatch: string
     filterID: string
     txId: int
+
+  Message* = tuple[body: string, sender: string]
 
 let NULLJSON*: JsonNode = %*{}
 
@@ -65,6 +68,13 @@ proc buildUrl(self: Matrix, endpoint: string, params: Option[ParamT],
 
   return url
 
+proc extractMessages*(self: Matrix, data: JsonNode): seq[Message] =
+  let roomData: JsonNode = data["rooms"]["join"]
+  if self.roomID in roomData:
+    let events: JsonNode = roomData[self.roomID]["timeline"]["events"]
+    for e in events:
+      result.add((e["content"]["body"].getStr, e["sender"].getStr))
+
 # REST procedures
 
 proc POST(self: Matrix, endpoint: string, data: JsonNode,
@@ -81,6 +91,15 @@ proc GET(self: Matrix, endpoint: string, params: Option[ParamT] = none(ParamT),
   let url: string = self.buildUrl(endpoint, params, version)
   let response: Response = self.client.request(url,
                                                httpMethod=HttpGet)
+  return response.body.parseJson
+
+proc PUT(self: Matrix, endpoint: string, data: JsonNode,
+         params: Option[ParamT] = none(ParamT),
+         version: string = "unstable"): JsonNode =
+  let url: string = self.buildUrl(endpoint, params, version)
+  let response: Response = self.client.request(url,
+                                               httpMethod=HttpPut,
+                                               body = $data)
   return response.body.parseJson
 
 # Endpoints
@@ -113,9 +132,17 @@ proc sync*(self: var Matrix): JsonNode =
   }.newTable)
 
   if len(self.nextBatch) > 0:
-    params.get["next_batch"] = self.nextBatch
+    params.get["since"] = self.nextBatch
 
   let response: JsonNode = self.GET("sync", params)
   self.nextBatch = response["next_batch"].getStr
 
   return response
+
+proc sendMessage*(self: var Matrix, message: string) =
+  let data = %*{
+    "body": message,
+    "msgtype": "m.text",
+  }
+  discard self.PUT(&"rooms/{self.roomID}/send/m.room.message/{self.txId}", data)
+  self.txId += 1
