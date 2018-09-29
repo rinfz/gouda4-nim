@@ -1,12 +1,15 @@
 import json
 import matrix
 import os
+import random
 import strutils
 import tables
 
 import modules/load
 
 const CONFIGFILE = "config.json"
+
+randomize()
 
 proc readConfig(): JsonNode = parseFile(CONFIGFILE)
 
