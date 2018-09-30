@@ -45,16 +45,19 @@ proc acronym(msg: Message): string =
 
 proc yesno(msg: Message): string =
   let splitMsg = msg.body.splitWhitespace
-  if splitMsg[0] in modals:
-    result = rand(ynReplies)
+  try:
+    if splitMsg[0] in modals or splitMsg[1] in modals:
+      result = rand(ynReplies)
+  except IndexError:
+    discard
 
 proc lol(msg: Message): string =
   if "lol" in msg.body or "5" in msg.body:
-    if rand(20) == 10:
+    if rand(4) == 2:
       result = rand(laughing)
 
 proc rate(msg: Message): string =
-  if "rate" in msg.body:
+  if "rate" in msg.body.splitWhitespace:
     result = ($rand(10)) & "/10"
 
 const functions* = {

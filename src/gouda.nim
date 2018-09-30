@@ -26,6 +26,10 @@ proc run() =
       data: JsonNode = connection.sync()
       messages: seq[Message] = connection.extractMessages(data)
 
+    if len(messages) > 0:
+      # update read marker
+      connection.markRead(messages[^1])
+
     for msg in messages:
       for fn in allFunctions:
         let reply = fn(msg)

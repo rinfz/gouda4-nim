@@ -4,6 +4,7 @@ import options
 import tables
 import strformat
 import strutils
+from unicode import toLower
 from uri import encodeUrl
 
 type
@@ -19,7 +20,7 @@ type
     filterID: string
     txId: int
 
-  Message* = tuple[body: string, sender: string]
+  Message* = tuple[body: string, sender: string, eventID: string]
 
 let NULLJSON*: JsonNode = %*{}
 
@@ -73,7 +74,11 @@ proc extractMessages*(self: Matrix, data: JsonNode): seq[Message] =
   if self.roomID in roomData:
     let events: JsonNode = roomData[self.roomID]["timeline"]["events"]
     for e in events:
-      result.add((e["content"]["body"].getStr, e["sender"].getStr))
+      if "body" in e["content"]:
+        result.add((e["content"]["body"].getStr.toLower,
+                    e["sender"].getStr,
+                    e["event_id"].getStr,
+                    ))
 
 # REST procedures
 
@@ -146,3 +151,10 @@ proc sendMessage*(self: var Matrix, message: string) =
   }
   discard self.PUT(&"rooms/{self.roomID}/send/m.room.message/{self.txId}", data)
   self.txId += 1
+
+proc markRead*(self: Matrix, msg: Message) =
+  let data = %*{
+    "m.fully_read": msg.eventID,
+    "m.read": msg.eventID,
+  }
+  discard self.POST(&"rooms/{self.roomID}/read_markers", data)
