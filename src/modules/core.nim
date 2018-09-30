@@ -1,4 +1,5 @@
 import random
+import tables
 import strutils
 import sugar
 from ../matrix import Message
@@ -46,7 +47,7 @@ proc acronym(msg: Message): string =
 proc yesno(msg: Message): string =
   let splitMsg = msg.body.splitWhitespace
   try:
-    if splitMsg[0] in modals or splitMsg[1] in modals:
+    if (splitMsg[0] in modals or splitMsg[1] in modals) and msg.body[^1] == '?':
       result = rand(ynReplies)
   except IndexError:
     discard
