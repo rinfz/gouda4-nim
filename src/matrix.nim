@@ -144,10 +144,10 @@ proc sync*(self: var Matrix): JsonNode =
 
   return response
 
-proc sendMessage*(self: var Matrix, message: string) =
+proc sendMessage*(self: var Matrix, message: string, mType: string = "m.text") =
   let data = %*{
     "body": message,
-    "msgtype": "m.text",
+    "msgtype": mType,
   }
   discard self.PUT(&"rooms/{self.roomID}/send/m.room.message/{self.txId}", data)
   self.txId += 1

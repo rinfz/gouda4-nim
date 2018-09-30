@@ -12,7 +12,9 @@ proc ddg*(msg: Message): string =
     let
       client = newHttpClient()
       query: string = encodeUrl(msg.body[msg.body.find("what is")..^1])
-      response = client.getContent(&"https://api.duckduckgo.com/?q={query}&format=json&no_html=1")
+      response = client.getContent(
+        &"https://api.duckduckgo.com/?q={query}&format=json&no_html=1"
+      )
       data = parseJson(response)
 
     if "AbstractText" in data:

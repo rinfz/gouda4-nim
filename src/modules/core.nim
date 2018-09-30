@@ -9,7 +9,7 @@ const
   modals: seq[string] = @[
     "can", "could", "may", "might", "shall", "should", "will", "would", "must",
     "ought", "are", "am", "is", "does", "did", "didnt", "didn't", "do", "don't",
-    "dont",
+    "dont", "was",
   ]
   greetings: seq[string] = @[
     "hi", "hello", "yo", "sup", "howdy", "hey",
@@ -58,8 +58,14 @@ proc lol(msg: Message): string =
       result = rand(laughing)
 
 proc rate(msg: Message): string =
-  if "rate" in msg.body.splitWhitespace:
+  if "rate" in msg.body.splitWhitespace or
+      "r8" in msg.body.splitWhitespace:
     result = ($rand(10)) & "/10"
+
+proc nice(msg: Message): string =
+  let words = msg.body.splitWhitespace
+  if "nice" in words or "sick" in words:
+    result = "👌"
 
 const functions* = {
   "greet": greet,
@@ -67,4 +73,5 @@ const functions* = {
   "yesno": yesno,
   "lol": lol,
   "rate": rate,
+  "nice": nice,
 }
